@@ -6,7 +6,7 @@ import json
 import pandas as pd
 
 # Set your API key (replace 'YOUR_API_KEY' with your actual API key)
-API_KEY = 'YOUR_API_KEY'
+API_KEY = 'AIzaSyDOiOOGjskuedf2x-q-f9SLZm24w0_wbwo'
 
 # Set the YouTube API service
 youtube = build('youtube', 'v3', developerKey=API_KEY)
