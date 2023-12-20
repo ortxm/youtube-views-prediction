@@ -57,9 +57,9 @@ def get_video_analytics(video_id, start_date, end_date):
 
 
 def main():
-    video_id = 'VIDEO_ID'
+    video_id = 'cyeaGI2UyDs'
     start_date = '2023-01-01'
-    end_date = '2023-01-31'
+    end_date = '2023-12-31'
 
     video_data = get_video_data(video_id)
     video_analytics = get_video_analytics(video_id, start_date, end_date)
