@@ -8,16 +8,16 @@ from googleapiclient.discovery import build
 API_KEY = 'AIzaSyDOiOOGjskuedf2x-q-f9SLZm24w0_wbwo'  # Replace with your actual API key
 # Manually specified channel IDs for data collection
 CHANNELS = [
-    {'name': 'Channel1', 'id': 'UCVp3nfGRxmMadNDuVbJSk8A'},
-    {'name': 'Channel2', 'id': 'UCN8S4CqMRy6tVKVXvs7Bzeg'},
-    {'name': 'Channel3', 'id': 'UCq-Fj5jknLsUf-MWSy4_brA'},
-    {'name': 'Channel4', 'id': 'UCbCmjCuTUZos6Inko4u57UQ'},
-    {'name': 'Channel5', 'id': 'UCpEhnqL0y41EpW2TvWAHD7Q'},
-    {'name': 'Channel6', 'id': 'UCqJJbvUhO5bybTZT-dKSe7w'},
-    {'name': 'Channel7', 'id': 'UC8f7MkX4MFOOJ2SerXLInCA'},
-    {'name': 'Channel8', 'id': 'UCI4fHQkguBNW3SwTqmehzjw'},
-    {'name': 'Channel9', 'id': 'UC6-F5tO8uklgE9Zy8IvbdFw'},
-    {'name': 'Channel10', 'id': 'UCMsPm8-25ygqRrRe9_s1WFw'},
+    {'name': 'T-Series', 'id': 'UCq-Fj5jknLsUf-MWSy4_brA'},
+    {'name': 'Zee Music Company', 'id': 'UCFFbwnve3yF62-tVXkTyHqg'},
+    {'name': 'BLACKPINK', 'id': 'UCOmHUn--16B90oW2L6FRR3A'},
+    {'name': 'BANGTANTV', 'id': 'UCLkAepWjdylmXSltofFvsYQ'},
+    {'name': 'HYBE LABELS', 'id': 'UC3IZKseVpdzPSBaWxBxundA'},
+    {'name': 'Justin Bieber', 'id': 'UCIwFjwMjI0y7PDBVEO9-bkQ'},
+    {'name': 'Tips Official', 'id': 'UCJrDMFOdv1I2k8n9oK_V21w'},
+    {'name': 'Marshmello', 'id': 'UCEdvpU2pFRCVqU6yIPyTpMQ'},
+    {'name': 'Taylor Swift', 'id': 'UCqECaJ8Gagnn7YCbPEzWH6g'},
+    {'name': 'EminemMusic', 'id': 'UCfM3zsQsOnfWNUppiycmBuw'},
 ]
 
 VIDEOS_PER_CHANNEL = 30
@@ -40,16 +40,21 @@ def is_same_day(timestamp1, timestamp2):
 
 def duration_to_seconds(duration):
     """
-    Convert video duration from the format PT1H5M49S to seconds.
+    Convert video duration from the format PT3M39S to seconds.
     """
     duration = duration[2:]  # Remove 'PT' at the beginning
     seconds = 0
-    time_segments = {'H': 3600, 'M': 60, 'S': 1}
+    segments = duration.split('M')
 
-    for segment in time_segments:
-        if segment in duration:
-            value = int(duration.split(segment)[0])
-            seconds += value * time_segments[segment]
+    for segment in segments:
+        if 'H' in segment:
+            hours, minutes = segment.split('H')
+            seconds += int(hours) * 3600
+        elif 'S' in segment:
+            seconds += int(segment.split('S')[0])
+        elif 'M' in segment:
+            minutes = segment.split('M')[0]
+            seconds += int(minutes) * 60
 
     return seconds
 
@@ -129,10 +134,10 @@ def get_videos_from_playlist(youtube, playlist_id, max_results):
                     "title": item["snippet"]["title"],
                     "upload_date": item["contentDetails"]["videoPublishedAt"],
                     "video_id": item["contentDetails"]["videoId"],
-                    "views": 0,  # You can update this based on your requirements
-                    "likes": 0,  # You can update this based on your requirements
-                    "dislikes": 0,  # You can update this based on your requirements
-                    "comments": 0  # You can update this based on your requirements
+                    "viewCount": get_video_stats(youtube, item["contentDetails"]["videoId"], "viewCount"),
+                    "likeCount": get_video_stats(youtube, item["contentDetails"]["videoId"], "likeCount"),
+                    "commentCount": get_video_stats(youtube, item["contentDetails"]["videoId"], "commentCount"),
+                    "durationMs": get_video_stats(youtube, item["contentDetails"]["videoId"], "durationMs")
                 }
                 videos.append(video_data)
             except KeyError as e:
@@ -146,9 +151,39 @@ def get_videos_from_playlist(youtube, playlist_id, max_results):
         return []
 
 
+def get_video_stats(youtube, video_id, stat_type):
+    """
+    Get statistics (views, likes, comments, duration) for a specific video using YouTube Data API v3.
+    """
+    try:
+        # API request to get video statistics
+        video_stats_response = youtube.videos().list(
+            part='statistics,contentDetails',
+            id=video_id
+        ).execute()
+
+        # Extract the desired statistic
+        statistics = video_stats_response['items'][0]['statistics']
+        content_details = video_stats_response['items'][0]['contentDetails']
+
+        if stat_type in statistics:
+            return int(statistics[stat_type])
+        elif stat_type == "durationMs" and 'duration' in content_details:
+            return content_details['duration']
+        elif stat_type == "durationMs":
+            return 0  # If 'duration' is not present in content details, return 0 for durationMs
+
+        print(f"Error: No '{stat_type}' statistic found for video {video_id}")
+        return 0
+
+    except Exception as e:
+        print(f"Error getting video {stat_type}: {str(e)}")
+        return 0
+
+
 def process_videos(videos):
     """
-    Process the video data as needed.
+    Process the video data as nee
     """
     # Add your processing logic here
     return videos
@@ -159,7 +194,7 @@ def write_to_csv(file_path, data):
     Write video data to a CSV file.
     """
     with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['title', 'upload_date', 'video_id', 'views', 'likes', 'dislikes', 'comments']
+        fieldnames = ['title', 'upload_date', 'video_id', 'viewCount', 'likeCount', 'commentCount', 'durationMs']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data)
