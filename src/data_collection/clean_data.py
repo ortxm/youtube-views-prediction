@@ -1,6 +1,6 @@
 import pandas as pd
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 # Define the path to the CSV file
 csv_path = "datasets/video_data.csv"
@@ -9,7 +9,7 @@ csv_path = "datasets/video_data.csv"
 df = pd.read_csv(csv_path)
 
 # Drop unnecessary columns
-df = df.drop(columns=['title', 'upload_date', 'video_id'])
+df = df.drop(columns=['title', 'video_id'])
 
 
 # Convert durationMs to seconds
@@ -27,6 +27,9 @@ def convert_duration(duration_str):
 
 df['duration_seconds'] = df['durationMs'].apply(convert_duration)
 df = df.drop(columns=['durationMs'])
+
+# Convert upload_date to "m/d/y" format
+df['upload_date'] = pd.to_datetime(df['upload_date']).dt.strftime('%m/%d/%Y')
 
 # Save the cleaned dataset
 cleaned_csv_path = "datasets/cleaned_video_data.csv"
